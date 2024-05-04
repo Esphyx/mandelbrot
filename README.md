@@ -1,2 +1,2 @@
 # Mandelbrot
-A mandelbrot image generator
+A mandelbrot fractal generator
