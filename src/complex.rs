@@ -11,10 +11,6 @@ impl Complex {
         Self { real, imaginary }
     }
 
-    // pub fn distance(&self, other: Complex) -> f64 {
-    //     ((self.real - other.real).powi(2) + (self.imaginary - other.imaginary).powi(2)).sqrt()
-    // }
-
     pub fn norm(&self) -> f64 {
         (self.real.powi(2) + self.imaginary.powi(2)).sqrt()
     }
