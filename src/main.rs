@@ -1,4 +1,4 @@
-use colors_transform::{Color, Hsl};
+use colors_transform::Color;
 
 mod complex;
 
@@ -27,12 +27,26 @@ fn main() {
         scale,
     } = config;
 
+    const TOTAL_STEPS: u64 = 100;
+    let bar = indicatif::ProgressBar::new(TOTAL_STEPS);
+    bar.set_style(
+        indicatif::ProgressStyle::with_template(
+            "[{elapsed_precise}] [{bar:40.cyan/blue}] {pos}% ETA: {eta}",
+        )
+        .unwrap()
+        .progress_chars("=>-"),
+    );
+
     let mut image = image::ImageBuffer::new(width, height);
-
     for (x, y, pixel) in image.enumerate_pixels_mut() {
-        println!("");
-
         let (x, y) = (x as f64, y as f64);
+
+        let pixel_progress = x + y * width as f64;
+
+        let ratio = pixel_progress / (width * height) as f64;
+        let progress_bar_position = (ratio * TOTAL_STEPS as f64) as u64;
+
+        bar.set_position(progress_bar_position);
 
         let mapped_x = x_min + (x_max - x_min) * x / width as f64;
         let mapped_y = y_min + (y_max - y_min) * y / height as f64;
@@ -45,7 +59,7 @@ fn main() {
             z = z * z + c;
             iteration += 1;
         }
-        let rgb = Hsl::from(
+        let rgb = colors_transform::Hsl::from(
             iteration as f32 / 2.0 + 245.0,
             100.0,
             if iteration < max_iteration_count {
