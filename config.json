@@ -1,0 +1,10 @@
+{
+  "size": [8192, 8192],
+  "range": {
+    "x": [-2.0, 1.0],
+    "y": [-1.5, 1.5]
+  },
+  "max_iteration_count": 100,
+  "max_distance": 2.0,
+  "scale": 1.0
+}

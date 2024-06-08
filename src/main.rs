@@ -1,83 +1,55 @@
 use colors_transform::{Color, Hsl};
-use std::ops::{Add, Mul};
 
-#[derive(Clone, Copy, Debug)]
-pub struct Complex {
-    real: f64,
-    imaginary: f64,
+mod complex;
+
+#[derive(serde::Deserialize)]
+struct Config {
+    size: (u32, u32),
+    x_range: (f64, f64),
+    y_range: (f64, f64),
+    max_iteration_count: u32,
+    max_distance: f64,
+    scale: f64,
 }
-
-impl Complex {
-    pub fn from(real: f64, imaginary: f64) -> Self {
-        Self { real, imaginary }
-    }
-    pub fn distance(&self, other: Complex) -> f64 {
-        ((self.real - other.real).powi(2) + (self.imaginary - other.imaginary).powi(2)).sqrt()
-    }
-    pub fn norm(&self) -> f64 {
-        (self.real.powi(2) + self.imaginary.powi(2)).sqrt()
-    }
-}
-
-impl Mul for Complex {
-    type Output = Complex;
-
-    fn mul(self, rhs: Self) -> Self::Output {
-        Self {
-            real: self.real * rhs.real - self.imaginary * rhs.imaginary,
-            imaginary: self.real * self.imaginary + rhs.real * rhs.imaginary,
-        }
-    }
-}
-
-impl Add for Complex {
-    type Output = Complex;
-
-    fn add(self, rhs: Complex) -> Self::Output {
-        Self {
-            real: self.real + rhs.real,
-            imaginary: self.imaginary + rhs.imaginary,
-        }
-    }
-}
-
-const WIDTH: u32 = 32768;
-const HEIGHT: u32 = 32768;
-
-const X_MIN: f64 = -2.0;
-const X_MAX: f64 = 1.0;
-const Y_MIN: f64 = -1.5;
-const Y_MAX: f64 = 1.5;
-
-const MAX_ITERATION: u32 = 100;
-const DISTANCE: f64 = 2.0;
-
-const SCALE: f64 = 1.0;
 
 fn main() {
     println!("Hello, world!");
 
-    let mut image = image::ImageBuffer::new(WIDTH, HEIGHT);
+    let content = std::fs::read_to_string("./config.json").unwrap();
+    let config: Config = serde_json::from_slice(content.as_bytes()).unwrap();
+
+    let Config {
+        size: (width, height),
+        x_range: (x_min, x_max),
+        y_range: (y_min, y_max),
+        max_distance,
+        max_iteration_count,
+        scale,
+    } = config;
+
+    let mut image = image::ImageBuffer::new(width, height);
 
     for (x, y, pixel) in image.enumerate_pixels_mut() {
-        let x = x as f64;
-        let y = y as f64;
+        println!("");
 
-        let mapped_x = X_MIN + (X_MAX - X_MIN) * x / WIDTH as f64;
-        let mapped_y = Y_MIN + (Y_MAX - Y_MIN) * y / HEIGHT as f64;
+        let (x, y) = (x as f64, y as f64);
 
-        let mut z = Complex::from(0.0, 0.0);
-        let c = Complex::from(SCALE * mapped_x, SCALE * mapped_y);
+        let mapped_x = x_min + (x_max - x_min) * x / width as f64;
+        let mapped_y = y_min + (y_max - y_min) * y / height as f64;
+
+        let mut z = complex::Complex::from(0.0, 0.0);
+        let c = complex::Complex::from(scale * mapped_x, scale * mapped_y);
+
         let mut iteration = 0;
-        while iteration < MAX_ITERATION && z.norm() <= DISTANCE {
+        while iteration < max_iteration_count && z.norm() <= max_distance {
             z = z * z + c;
             iteration += 1;
         }
         let rgb = Hsl::from(
             iteration as f32 / 2.0 + 245.0,
             100.0,
-            if iteration < MAX_ITERATION {
-                iteration as f32 / MAX_ITERATION as f32 * 50.0
+            if iteration < max_iteration_count {
+                iteration as f32 / max_iteration_count as f32 * 50.0
             } else {
                 0.0
             },
